@@ -19,4 +19,10 @@ interface ApiService {
 
     @POST("/posts")
     suspend fun createNewData(post:PostItem)
+
+    @POST("/posts/{postId}/comments")
+    suspend fun createNewComments(comment: CommentItem)
+
+    @GET("/posts/{id}")
+    suspend fun getPostById(@Path("id") id:Int) : PostItem
 }

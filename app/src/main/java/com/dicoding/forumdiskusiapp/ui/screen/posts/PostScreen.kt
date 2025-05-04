@@ -42,7 +42,8 @@ fun PostScreen(
     modifier: Modifier = Modifier,
     viewModel: PostViewModel = viewModel(
         factory = ViewModelFactory(Injection.provideRepository())
-    )
+    ),
+    navigateToComment: (Int) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -55,10 +56,12 @@ fun PostScreen(
             val posts = (uiState as UiState.Success<List<Post>>).data
             PostContent(
                 modifier = modifier,
-                posts = posts
-            ) { post, userId ->
-                viewModel.addPost(post, userId)
-            }
+                posts = posts,
+                addToPost = { post, userId ->
+                    viewModel.addPost(post, userId)
+                },
+                navigateToComment = navigateToComment
+            )
         }
 
         is UiState.Error -> {
@@ -71,7 +74,8 @@ fun PostScreen(
 fun PostContent(
     modifier: Modifier = Modifier,
     posts: List<Post>,
-    addToPost: (Post, Int) -> Unit
+    addToPost: (Post, Int) -> Unit,
+    navigateToComment: (Int) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
@@ -145,7 +149,9 @@ fun PostContent(
                     userName = data.userName,
                     modifier = Modifier
                         .animateItem(placementSpec = tween(durationMillis = 100))
-                        .clickable { }
+                        .clickable {
+                            navigateToComment(data.id)
+                        }
                 )
                 HorizontalDivider(
                     modifier = Modifier
@@ -157,10 +163,4 @@ fun PostContent(
         }
 
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PostScreenPreview() {
-    PostScreen()
 }

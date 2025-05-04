@@ -11,14 +11,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun CommentComponent(modifier: Modifier = Modifier, name: String, body: String) {
+fun CommentComponent(modifier: Modifier = Modifier, name: String, body: String, email: String) {
     Column {
         Text(
             text = name,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .padding(horizontal = 8.dp)
+        )
+        Text(
+            text = email,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier
+                .padding(bottom = 4.dp, start = 8.dp)
         )
         Text(
             text = body,

@@ -1,5 +1,7 @@
 package com.dicoding.forumdiskusiapp.ui.screen.comments
 
+import android.util.Log
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -8,6 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -17,6 +22,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,22 +36,70 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dicoding.forumdiskusiapp.data.model.Post
 import com.dicoding.forumdiskusiapp.data.remote.response.CommentItem
+import com.dicoding.forumdiskusiapp.di.Injection
+import com.dicoding.forumdiskusiapp.di.ViewModelFactory
+import com.dicoding.forumdiskusiapp.ui.common.UiState
 import com.dicoding.forumdiskusiapp.ui.components.CommentComponent
 import com.dicoding.forumdiskusiapp.ui.components.PostComponent
-import com.dicoding.forumdiskusiapp.ui.theme.ForumDiskusiAppTheme
 
 @Composable
-fun CommentScreen(modifier: Modifier = Modifier, post: Post, comment: CommentItem) {
+fun CommentScreen(
+    modifier: Modifier = Modifier,
+    id: Int,
+    viewModel: CommentViewModel = viewModel(
+        factory = ViewModelFactory(Injection.provideRepository())
+    )
+) {
 
+    val post by viewModel.post.collectAsState()
+    val commentState by viewModel.commentState.collectAsState()
+
+    when (commentState) {
+        is UiState.Loading -> {
+            viewModel.getThePost(id)
+            viewModel.getAllComments(id)
+        }
+
+        is UiState.Success -> {
+            val comments = (commentState as UiState.Success<List<CommentItem>>).data
+            CommentContent(
+                post = post,
+                comment = comments
+            ) { comment ->
+                viewModel.addComment(comment = comment)
+            }
+        }
+
+        is UiState.Error -> {
+            Log.d("Comments error", (commentState as UiState.Error).message)
+        }
+    }
+
+}
+
+@Composable
+fun CommentContent(
+    modifier: Modifier = Modifier,
+    post: Post,
+    comment: List<CommentItem>,
+    addComment: (CommentItem) -> Unit
+) {
     var inputComment by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     var commentId by rememberSaveable { mutableStateOf(101) }
+    var listState = rememberLazyListState()
+
+    LaunchedEffect(comment.size) {
+        if(comment.isNotEmpty()) {
+            listState.animateScrollToItem(0)
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -66,16 +121,17 @@ fun CommentScreen(modifier: Modifier = Modifier, post: Post, comment: CommentIte
                 )
                 IconButton(
                     onClick = {
-                        val comment = CommentItem(
+                        val newComment = CommentItem(
                             name = "Aditya",
-                            postId = 1111,
-                            id = 11111,
+                            postId = post.id,
+                            id = commentId,
                             body = inputComment,
                             email = "adityaprimayudha91@gmail.com"
                         )
                         inputComment = ""
                         focusManager.clearFocus()
                         keyboardController?.hide()
+                        addComment(newComment)
                         commentId++
                     },
                     enabled = inputComment.isNotEmpty()
@@ -101,51 +157,31 @@ fun CommentScreen(modifier: Modifier = Modifier, post: Post, comment: CommentIte
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
             )
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 8.dp)
+            LazyColumn(
+                state = listState
             ) {
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .border(3.dp, Color.Black, CircleShape)
-                        .size(32.dp)
-                        .background(Color.Yellow)
-                ) {
+                items(comment, key = { it.id }) { comment ->
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp, vertical = 8.dp)
+                            .animateItem(placementSpec = tween(durationMillis = 100))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .border(3.dp, Color.Black, CircleShape)
+                                .size(32.dp)
+                                .background(Color.Yellow)
+                        ) {
+                        }
+                        CommentComponent(
+                            name = comment.name.toString(),
+                            email = comment.email.toString(),
+                            body = comment.body.toString()
+                        )
+                    }
                 }
-                CommentComponent(
-                    name = comment.name.toString(),
-                    body = comment.body.toString()
-                )
             }
         }
-    }
-
-}
-
-@Composable
-fun CommentContent(modifier: Modifier = Modifier) {
-
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun CommentScreenPrev() {
-    ForumDiskusiAppTheme {
-        CommentScreen(
-            post = Post(
-                id = 1,
-                title = "2e2e2e2",
-                body = "AWDJOIAWDJOAIDJIOASDJWIOAJDIOWAJDIOJADIOAWDJIOSAIOJWDIOASJDIOAWJDIOAJDIOAWJDIOASJDIOAWJDIOAJWDIOJASIODJAWOIDJAWIODJIAw",
-                userName = "ADIATA"
-            ),
-            comment = CommentItem(
-                name = "Aditya",
-                postId = 191,
-                id = 191,
-                body = "AJWODIJWAIODJAWDIOWJADIOJWADOIAWJDWIOADJOAI",
-                email = "Aditaprimayduabwd81@gmail.com"
-            )
-        )
     }
 }

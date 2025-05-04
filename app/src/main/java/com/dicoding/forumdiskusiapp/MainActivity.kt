@@ -13,12 +13,9 @@ import com.dicoding.forumdiskusiapp.ui.theme.ForumDiskusiAppTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             ForumDiskusiAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    PostScreen(modifier = Modifier.padding(innerPadding))
-                }
+                ForumDiskusiApp()
             }
         }
     }

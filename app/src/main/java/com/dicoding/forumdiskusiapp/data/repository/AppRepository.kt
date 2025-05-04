@@ -3,6 +3,7 @@ package com.dicoding.forumdiskusiapp.data.repository
 import android.util.Log
 import com.dicoding.forumdiskusiapp.data.model.Post
 import com.dicoding.forumdiskusiapp.data.model.toPost
+import com.dicoding.forumdiskusiapp.data.remote.response.CommentItem
 import com.dicoding.forumdiskusiapp.data.remote.response.PostItem
 import com.dicoding.forumdiskusiapp.data.remote.retrofit.ApiConfig
 import kotlinx.coroutines.async
@@ -13,8 +14,10 @@ import kotlinx.coroutines.flow.flow
 
 class AppRepository {
     var dataPost = emptyList<Post>()
+    var dataComment = emptyList<CommentItem>()
+    val client = ApiConfig.getApiService()
+
     fun getAllPosts(): Flow<List<Post>> = flow {
-        val client = ApiConfig.getApiService()
         dataPost = coroutineScope {
             val result = client.getAllPosts()
             result.map { data ->
@@ -25,6 +28,17 @@ class AppRepository {
             }.awaitAll()
         }
         emit(dataPost)
+    }
+
+    fun getPostById(id: Int) : Flow<Post> = flow {
+        val post = coroutineScope {
+            val result = client.getPostById(id)
+            async {
+                val user = client.getUserById(result.userId)
+                result.toPost(userName = user.name)
+            }.await()
+        }
+        emit(post)
     }
 
     suspend fun addPost(newData: Post, userId: Int): Post {
@@ -40,6 +54,21 @@ class AppRepository {
             Log.d("Error Post", "Failed :" + e.message)
         }
         return newData
+    }
+
+    suspend fun addComment(newData: CommentItem) : CommentItem {
+        try {
+            ApiConfig.getApiService().createNewComments(newData)
+
+        } catch (e:Exception) {
+            Log.d("Error Comment", "Failed :" + e.message)
+        }
+        return newData
+    }
+
+    fun getAllCommentOfAPost(id: Int): Flow<List<CommentItem>> = flow {
+        dataComment = client.getPostComments(id)
+        emit(dataComment)
     }
 
 

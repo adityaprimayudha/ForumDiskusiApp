@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ForumDiskusiApp</string>
+    <string name="comment">Comment</string>
+    <string name="forum_diskusi_app">Forum Diskusi App</string>
 </resources>
