@@ -5,21 +5,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.dicoding.forumdiskusiapp.di.Injection
+import com.dicoding.forumdiskusiapp.di.ViewModelFactory
 import com.dicoding.forumdiskusiapp.ui.components.TopBar
 import com.dicoding.forumdiskusiapp.ui.navigation.Screen
 import com.dicoding.forumdiskusiapp.ui.screen.comments.CommentScreen
 import com.dicoding.forumdiskusiapp.ui.screen.posts.PostScreen
+import com.dicoding.forumdiskusiapp.ui.screen.posts.PostViewModel
 
 @Composable
 fun ForumDiskusiApp(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    postViewModel: PostViewModel = viewModel(
+        factory = ViewModelFactory(Injection.provideRepository())
+    )
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -34,8 +41,9 @@ fun ForumDiskusiApp(
             composable(Screen.Post.route) {
                 PostScreen(
                     navigateToComment = { id ->
-                        navController.navigate(Screen.Comment.createRoute(id))
-                    }
+                        navController.navigate(route = Screen.Comment.createRoute(id))
+                    },
+                    viewModel = postViewModel
                 )
             }
 
@@ -46,7 +54,7 @@ fun ForumDiskusiApp(
                 }),
             ) {
                 val id = it.arguments?.getInt("id") ?: 0
-                CommentScreen(id = id)
+                CommentScreen(id = id, postViewModel = postViewModel)
             }
         }
     }

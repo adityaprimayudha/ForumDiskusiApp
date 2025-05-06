@@ -27,22 +27,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dicoding.forumdiskusiapp.data.model.Post
-import com.dicoding.forumdiskusiapp.di.Injection
-import com.dicoding.forumdiskusiapp.di.ViewModelFactory
 import com.dicoding.forumdiskusiapp.ui.common.UiState
 import com.dicoding.forumdiskusiapp.ui.components.PostComponent
 
 @Composable
 fun PostScreen(
     modifier: Modifier = Modifier,
-    viewModel: PostViewModel = viewModel(
-        factory = ViewModelFactory(Injection.provideRepository())
-    ),
+    viewModel: PostViewModel,
     navigateToComment: (Int) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()

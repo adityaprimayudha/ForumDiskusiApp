@@ -2,7 +2,6 @@ package com.dicoding.forumdiskusiapp.ui.screen.comments
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dicoding.forumdiskusiapp.data.model.Post
 import com.dicoding.forumdiskusiapp.data.remote.response.CommentItem
 import com.dicoding.forumdiskusiapp.data.repository.AppRepository
 import com.dicoding.forumdiskusiapp.ui.common.UiState
@@ -12,14 +11,14 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class CommentViewModel(val repository: AppRepository) : ViewModel() {
-    private val _post: MutableStateFlow<Post> = MutableStateFlow(Post(id = 0, userName = ""))
-    val post get() = _post.asStateFlow()
+    /*private val _post: MutableStateFlow<Post> = MutableStateFlow(Post(id = 0, userName = ""))
+    val post get() = _post.asStateFlow()*/
 
     private val _commentState: MutableStateFlow<UiState<List<CommentItem>>> =
         MutableStateFlow(UiState.Loading)
     val commentState get() = _commentState.asStateFlow()
 
-    fun getThePost(id: Int) {
+    /*fun getThePost(id: Int) {
         viewModelScope.launch {
             repository.getPostById(id)
                 .catch { e ->
@@ -29,7 +28,7 @@ class CommentViewModel(val repository: AppRepository) : ViewModel() {
                     _post.value = post
                 }
         }
-    }
+    }*/
 
     fun getAllComments(id: Int) {
         viewModelScope.launch {

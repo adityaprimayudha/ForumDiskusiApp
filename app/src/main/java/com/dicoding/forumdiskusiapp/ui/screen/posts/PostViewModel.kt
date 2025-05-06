@@ -15,6 +15,9 @@ class PostViewModel(val repository: AppRepository) : ViewModel() {
         MutableStateFlow(UiState.Loading)
     val uiState get() = _uiState.asStateFlow()
 
+    private var _currentPost : MutableStateFlow<Post> = MutableStateFlow(Post(-1, "","",""))
+    val currentPost get() = _currentPost
+
     fun getAllPosts() {
         viewModelScope.launch {
             repository.getAllPosts()
@@ -24,6 +27,15 @@ class PostViewModel(val repository: AppRepository) : ViewModel() {
                 .collect { data ->
                     _uiState.value = UiState.Success(data)
                 }
+        }
+    }
+
+    fun getCurrentPost(id: Int) {
+        if(_uiState.value is UiState.Success) {
+            val result = (_uiState.value as UiState.Success<List<Post>>).data.find { it.id == id }
+            if (result != null) {
+                _currentPost.value = result
+            }
         }
     }
 

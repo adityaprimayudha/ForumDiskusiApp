@@ -46,26 +46,28 @@ import com.dicoding.forumdiskusiapp.di.ViewModelFactory
 import com.dicoding.forumdiskusiapp.ui.common.UiState
 import com.dicoding.forumdiskusiapp.ui.components.CommentComponent
 import com.dicoding.forumdiskusiapp.ui.components.PostComponent
+import com.dicoding.forumdiskusiapp.ui.screen.posts.PostViewModel
 
 @Composable
 fun CommentScreen(
     modifier: Modifier = Modifier,
     id: Int,
+    postViewModel: PostViewModel,
     viewModel: CommentViewModel = viewModel(
         factory = ViewModelFactory(Injection.provideRepository())
     )
 ) {
-
-    val post by viewModel.post.collectAsState()
+    val postState by postViewModel.currentPost.collectAsState()
     val commentState by viewModel.commentState.collectAsState()
 
     when (commentState) {
         is UiState.Loading -> {
-            viewModel.getThePost(id)
+            postViewModel.getCurrentPost(id)
             viewModel.getAllComments(id)
         }
 
         is UiState.Success -> {
+            val post = postState
             val comments = (commentState as UiState.Success<List<CommentItem>>).data
             CommentContent(
                 post = post,
