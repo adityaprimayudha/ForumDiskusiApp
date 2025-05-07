@@ -6,11 +6,13 @@ import com.dicoding.forumdiskusiapp.data.model.toPost
 import com.dicoding.forumdiskusiapp.data.remote.response.CommentItem
 import com.dicoding.forumdiskusiapp.data.remote.response.PostItem
 import com.dicoding.forumdiskusiapp.data.remote.retrofit.ApiConfig
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 
 class AppRepository {
     var dataPost = emptyList<Post>()
@@ -28,7 +30,7 @@ class AppRepository {
             }.awaitAll()
         }
         emit(dataPost)
-    }
+    }.flowOn(Dispatchers.IO)
 
     fun getPostById(id: Int) : Flow<Post> = flow {
         val post = coroutineScope {
@@ -39,7 +41,7 @@ class AppRepository {
             }.await()
         }
         emit(post)
-    }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun addPost(newData: Post, userId: Int): Post {
         val post = PostItem(
@@ -69,7 +71,7 @@ class AppRepository {
     fun getAllCommentOfAPost(id: Int): Flow<List<CommentItem>> = flow {
         dataComment = client.getPostComments(id)
         emit(dataComment)
-    }
+    }.flowOn(Dispatchers.IO)
 
 
     companion object {

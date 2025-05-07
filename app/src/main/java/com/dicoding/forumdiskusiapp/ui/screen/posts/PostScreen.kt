@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dicoding.forumdiskusiapp.data.model.Post
 import com.dicoding.forumdiskusiapp.ui.common.UiState
+import com.dicoding.forumdiskusiapp.ui.components.LoadingCircle
 import com.dicoding.forumdiskusiapp.ui.components.PostComponent
 
 @Composable
@@ -44,6 +46,7 @@ fun PostScreen(
     when (uiState) {
         is UiState.Loading -> {
             viewModel.getAllPosts()
+            LoadingCircle()
         }
 
         is UiState.Success -> {
@@ -73,7 +76,7 @@ fun PostContent(
 ) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
-    var postId by rememberSaveable { mutableStateOf(101) }
+    var postId by rememberSaveable { mutableIntStateOf(101) }
     val listState = rememberLazyListState()
 
     val focusManager = LocalFocusManager.current

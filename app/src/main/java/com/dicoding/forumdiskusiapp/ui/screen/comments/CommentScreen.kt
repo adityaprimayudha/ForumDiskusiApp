@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,6 +49,7 @@ import com.dicoding.forumdiskusiapp.di.Injection
 import com.dicoding.forumdiskusiapp.di.ViewModelFactory
 import com.dicoding.forumdiskusiapp.ui.common.UiState
 import com.dicoding.forumdiskusiapp.ui.components.CommentComponent
+import com.dicoding.forumdiskusiapp.ui.components.LoadingCircle
 import com.dicoding.forumdiskusiapp.ui.components.PostComponent
 import com.dicoding.forumdiskusiapp.ui.screen.posts.PostViewModel
 
@@ -64,6 +69,7 @@ fun CommentScreen(
         is UiState.Loading -> {
             postViewModel.getCurrentPost(id)
             viewModel.getAllComments(id)
+            LoadingCircle()
         }
 
         is UiState.Success -> {
@@ -94,8 +100,8 @@ fun CommentContent(
     var inputComment by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    var commentId by rememberSaveable { mutableStateOf(101) }
-    var listState = rememberLazyListState()
+    var commentId by rememberSaveable { mutableIntStateOf(101) }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(comment.size) {
         if(comment.isNotEmpty()) {
@@ -108,6 +114,9 @@ fun CommentContent(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(16.dp)
+                    .fillMaxWidth()
+                    .imePadding()
+                    .navigationBarsPadding()
             ) {
                 OutlinedTextField(
                     value = inputComment,
