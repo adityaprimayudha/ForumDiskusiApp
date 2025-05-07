@@ -77,6 +77,8 @@ fun PostContent(
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     var postId by rememberSaveable { mutableIntStateOf(101) }
+    var contentIsError by remember { mutableStateOf(false) }
+    var titleIsError by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     val focusManager = LocalFocusManager.current
@@ -97,6 +99,7 @@ fun PostContent(
             label = {
                 Text("Title")
             },
+            isError = titleIsError,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
@@ -109,6 +112,7 @@ fun PostContent(
             label = {
                 Text("Content")
             },
+            isError = contentIsError,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
@@ -121,12 +125,20 @@ fun PostContent(
                     body = content,
                     userName = "Aditya"
                 )
-                addToPost(post, 11)
-                title = ""
-                content = ""
-                focusManager.clearFocus()
-                keyboardController?.hide()
-                postId++
+                if (title.isEmpty()) {
+                    titleIsError = true
+                } else if (content.isEmpty()) {
+                    contentIsError = true
+                } else {
+                    addToPost(post, 11)
+                    title = ""
+                    titleIsError = false
+                    content = ""
+                    contentIsError = false
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                    postId++
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
