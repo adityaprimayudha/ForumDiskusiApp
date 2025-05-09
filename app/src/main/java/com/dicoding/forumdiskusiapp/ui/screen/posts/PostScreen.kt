@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
@@ -25,9 +26,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dicoding.forumdiskusiapp.data.model.Post
@@ -42,6 +45,14 @@ fun PostScreen(
     navigateToComment: (Int) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+    var postId by rememberSaveable { mutableIntStateOf(101) }
+    var contentIsError by remember { mutableStateOf(false) }
+    var titleIsError by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     when (uiState) {
         is UiState.Loading -> {
@@ -56,8 +67,23 @@ fun PostScreen(
                 posts = posts,
                 addToPost = { post, userId ->
                     viewModel.addPost(post, userId)
+                    title = ""
+                    content = ""
+                    postId++
                 },
-                navigateToComment = navigateToComment
+                navigateToComment = navigateToComment,
+                onTitleChanged = { newTitle -> title = newTitle },
+                onContentChange = { newContent -> content = newContent },
+                changeTitleError = {isError -> titleIsError = isError},
+                changeContentError = {isError -> contentIsError = isError},
+                title = title,
+                content = content,
+                postId = postId,
+                contentIsError = contentIsError,
+                titleIsError = titleIsError,
+                listState = listState,
+                focusManager = focusManager,
+                keyboardController = keyboardController
             )
         }
 
@@ -72,17 +98,20 @@ fun PostContent(
     modifier: Modifier = Modifier,
     posts: List<Post>,
     addToPost: (Post, Int) -> Unit,
-    navigateToComment: (Int) -> Unit
+    navigateToComment: (Int) -> Unit,
+    onTitleChanged: (String) -> Unit,
+    onContentChange: (String) -> Unit,
+    title: String,
+    changeTitleError: (Boolean) -> Unit,
+    changeContentError: (Boolean) -> Unit,
+    content: String,
+    postId: Int,
+    contentIsError: Boolean,
+    titleIsError: Boolean,
+    listState: LazyListState,
+    focusManager: FocusManager,
+    keyboardController: SoftwareKeyboardController?
 ) {
-    var title by remember { mutableStateOf("") }
-    var content by remember { mutableStateOf("") }
-    var postId by rememberSaveable { mutableIntStateOf(101) }
-    var contentIsError by remember { mutableStateOf(false) }
-    var titleIsError by remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
-
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(posts.size) {
         if (posts.isNotEmpty()) {
@@ -93,9 +122,7 @@ fun PostContent(
     Column(modifier = modifier) {
         OutlinedTextField(
             value = title,
-            onValueChange = {
-                title = it
-            },
+            onValueChange = onTitleChanged,
             label = {
                 Text("Title")
             },
@@ -106,9 +133,7 @@ fun PostContent(
         )
         OutlinedTextField(
             value = content,
-            onValueChange = {
-                content = it
-            },
+            onValueChange = onContentChange,
             label = {
                 Text("Content")
             },
@@ -126,18 +151,15 @@ fun PostContent(
                     userName = "Aditya"
                 )
                 if (title.isEmpty()) {
-                    titleIsError = true
+                    changeTitleError(true)
                 } else if (content.isEmpty()) {
-                    contentIsError = true
+                    changeContentError(true)
                 } else {
                     addToPost(post, 11)
-                    title = ""
-                    titleIsError = false
-                    content = ""
-                    contentIsError = false
+                    changeTitleError(false)
+                    changeContentError(false)
                     focusManager.clearFocus()
                     keyboardController?.hide()
-                    postId++
                 }
             },
             modifier = Modifier

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -36,9 +37,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +67,11 @@ fun CommentScreen(
 ) {
     val postState by postViewModel.currentPost.collectAsState()
     val commentState by viewModel.commentState.collectAsState()
+    var inputComment by remember { mutableStateOf("") }
+    var commentId by rememberSaveable { mutableIntStateOf(101) }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val listState = rememberLazyListState()
 
     when (commentState) {
         is UiState.Loading -> {
@@ -77,10 +85,20 @@ fun CommentScreen(
             val comments = (commentState as UiState.Success<List<CommentItem>>).data
             CommentContent(
                 post = post,
-                comment = comments
-            ) { comment ->
-                viewModel.addComment(comment = comment)
-            }
+                comment = comments,
+                addComment = { comment ->
+                    viewModel.addComment(comment = comment)
+                    inputComment = ""
+                    commentId++
+                },
+                commentId = commentId,
+                inputComment = inputComment,
+                onTextChange = { inputComment = it },
+                focusManager = focusManager,
+                keyboardController = keyboardController,
+                listState = listState,
+                modifier = modifier
+            )
         }
 
         is UiState.Error -> {
@@ -95,14 +113,14 @@ fun CommentContent(
     modifier: Modifier = Modifier,
     post: Post,
     comment: List<CommentItem>,
-    addComment: (CommentItem) -> Unit
+    addComment: (CommentItem) -> Unit,
+    commentId: Int,
+    inputComment: String,
+    onTextChange: (String) -> Unit,
+    focusManager: FocusManager,
+    keyboardController: SoftwareKeyboardController?,
+    listState: LazyListState
 ) {
-    var inputComment by remember { mutableStateOf("") }
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-    var commentId by rememberSaveable { mutableIntStateOf(101) }
-    val listState = rememberLazyListState()
-
     LaunchedEffect(comment.size) {
         if(comment.isNotEmpty()) {
             listState.animateScrollToItem(0)
@@ -120,9 +138,7 @@ fun CommentContent(
             ) {
                 OutlinedTextField(
                     value = inputComment,
-                    onValueChange = {
-                        inputComment = it
-                    },
+                    onValueChange = onTextChange,
                     label = {
                         Text("Comment...")
                     },
@@ -139,18 +155,17 @@ fun CommentContent(
                             body = inputComment,
                             email = "adityaprimayudha91@gmail.com"
                         )
-                        inputComment = ""
                         focusManager.clearFocus()
                         keyboardController?.hide()
                         addComment(newComment)
-                        commentId++
                     },
                     enabled = inputComment.isNotEmpty()
                 ) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                 }
             }
-        }
+        },
+        modifier = modifier
     ) { innerPadding ->
         Column(
             modifier = Modifier
